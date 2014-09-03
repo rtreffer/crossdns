@@ -13,15 +13,18 @@ object Boot {
     def main(args: Array[String]) {
         Syslog.i("starting")
 
-        if (new File("./crossdns.conf").exists()) {
-            configure(new File("./crossdns.conf"))
+        val config =
+            List("./crossdns.conf",
+                 "/etc/crossdns.conf",
+                 "/etc/crossdns/crossdns.conf"
+            ).map(name => new File(name)).
+	    filter(_.exists).filter(_.isFile).headOption
+
+        if (config.isDefined) {
+            configure(config.get)
         } else {
-            if (new File("/etc/crossdns.conf").exists()) {
-                configure(new File("/etc/crossdns.conf"))
-            } else {
-                Syslog.e("Could not find a config file. Exiting.")
-                System.exit(1)
-            }
+            Syslog.e("Could not find a config file. Exiting.")
+            System.exit(1)
         }
 
         Syslog.i("started")

@@ -1,5 +1,9 @@
 import AssemblyKeys._
 
+import NativePackagerKeys._
+
+import com.typesafe.sbt.packager.archetypes.ServerLoader.{Upstart, SystemV}
+
 organization := "de.measite"
 
 name         := "crossdns"
@@ -52,3 +56,24 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     case x => old(x)
   }
 }
+
+packageArchetype.java_server
+
+
+packageDescription in Debian := "crossing the boundary between autodiscovery and dns"
+
+maintainer in Debian := "treffer@measite.de <Rene Treffer>"
+
+packageBin in Debian <<= debianJDebPackaging in Debian
+
+debianPackageDependencies in Debian ++= Seq("java2-runtime", "bash (>= 2.05a-11)")
+
+linuxPackageMappings in Debian <+= (baseDirectory) map { (basedir) => (packageMapping(
+  (basedir / "crossdns.conf.example") -> ("/etc/crossdns/crossdns.conf.example"))
+  withUser "root" withGroup "root" withPerms "0644" )
+}
+
+serverLoading in Debian := SystemV
+
+bashScriptExtraDefines += """addJava "-Xmx140m""""
+
