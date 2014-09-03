@@ -1,0 +1,25 @@
+/*
+ * CrossDNS configuration is actual scala code. You could - in theory - use any
+ * scala code you'd like.
+ * But you will usually just need the CrossDNS config as explained here
+ */
+
+// a simple zone
+val zone = Zone("home.invalid")
+// an updater (export)
+val updater = NSUpdate(
+    server = "192.168.0.1"
+    zoneName = "home.example.invalid"
+)
+// discovery services
+val mdns = MDNS("eth0")
+val smb = SMB()
+
+// now put it together
+zone.filter(not(`private`)) -> updater
+mdns -> zone
+smb -> zone
+
+mdns.start
+smb.start
+updater.start
