@@ -16,6 +16,8 @@ class NSUpdate(
     updateTimeout : Long = 60000
 ) extends Zone(zone.getOrElse("")) with Service {
 
+    private val worker : Thread = null
+
     val serviceName = "nsupdate"
 
     def act() : Unit = {
@@ -41,8 +43,16 @@ class NSUpdate(
             add +
             "send\nquit\n"
 
-        log.i(command)
-        (Seq("nsupdate", "-t", s"${updateTimeout / 1000l}") #< new ByteArrayInputStream(command.getBytes)).!
+        if (thread != null && thread.isAlive) {
+            try { thread.interrupt } catch {case t : Throwable => }
+        }
+        thread = new Thread() {
+            override def run() {
+                command.split("\n").foreach(log.i)
+                (Seq("nsupdate", "-t", s"${updateTimeout / 1000l}") #< new ByteArrayInputStream(command.getBytes)).lineStream.foreach(log.i)
+            }
+        }
+        thread.start
     }
 
 }
